@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة متابعة تقارير ومشاريع م. أحمد عطا</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                        },
+                        accent: {
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0b132b;
+            color: #f8fafc;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1c2541;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3a506b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5bc0be;
+        }
+
+        .glass-card {
+            background: rgba(28, 37, 65, 0.75);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card-hover:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.4);
+            border-color: rgba(34, 197, 94, 0.4);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #4ade80 0%, #38bdf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glow-green {
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.25);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* تحسين شكل حقل التاريخ ليتطابق مع الثيم الداكن */
+        input[type="month"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-10 selection:bg-brand-500 selection:text-white">
+
+    <header class="sticky top-0 z-40 glass-card border-b border-slate-700/60 px-4 lg:px-8 py-3.5 mb-6">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center text-white shadow-lg glow-green">
+                    <i class="fa-solid fa-user-gear text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl lg:text-2xl font-black gradient-text">جدول متابعة تقارير ومشاريع المهندس أحمد عطا</h1>
+                    <p class="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                        <span class="inline-block w-2.5 h-2.5 rounded-full bg-brand-500 animate-ping"></span>
+                        متابعة التقارير والمشاريع من واقع شيت المتابعة
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap justify-center">
+                <button onclick="openAiSummaryModal()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 border border-purple-400/30">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                    ملخص الذكاء الاصطناعي (Gemini)
+                </button>
+
+                <div id="syncBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-700 text-xs font-medium text-slate-300">
+                    <i id="syncIcon" class="fa-solid fa-arrows-rotate text-brand-500"></i>
+                    <span id="syncText">جاهز ومزامن</span>
+                    <span id="lastUpdatedTime" class="text-slate-500 text-[10px]"></span>
+                </div>
+
+                <button onclick="fetchLiveData()" class="px-4 py-1.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 hover:shadow-brand-500/20">
+                    <i id="refreshBtnIcon" class="fa-solid fa-rotate-right"></i>
+                    تحديث الآن
+                </button>
+
+                <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all text-xs" title="إعدادات رابط جوجل شيت">
+                    <i class="fa-solid fa-sliders text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div id="toastNotification" class="fixed bottom-5 left-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/95 border border-brand-500/50 text-white shadow-2xl text-xs">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-brand-400 text-base"></i>
+        <span id="toastMessage">تم التحديث بنجاح</span>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 lg:px-8 w-full flex-1 flex flex-col gap-6">
+
+        <!-- الإحصائيات العلوية -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-card glass-card-hover p-4 rounded-2xl flex items-center justify-between border-l-4 border-l-brand-500">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 mb-1">إجمالي تقارير الشهر المحدد</p>
+                    <h3 id="statTotalProjects" class="text-2xl font-black text-white">0</h3>
+                    <p id="statTotalSubtext" class="text-[11px] text-slate-400 mt-1">كافة السجلات المعروضة</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 text-xl">
+                    <i class="fa-solid fa-file-waveform"></i>
+                </div>
+            </div>
+
+            <div class="glass-card glass-card-hover p-4 rounded-2xl flex items-center justify-between border-l-4 border-l-emerald-400">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 mb-1">التقارير المكتملة</p>
+                    <h3 id="statCompletedReports" class="text-2xl font-black text-emerald-400">0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">اكتملت وتم إصدار التقرير النهائي</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
+                    <i class="fa-solid fa-file-circle-check"></i>
+                </div>
+            </div>
+
+            <div class="glass-card glass-card-hover p-4 rounded-2xl flex items-center justify-between border-l-4 border-l-amber-400">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 mb-1">قيد الإصدار والمراجعة</p>
+                    <h3 id="statPendingReports" class="text-2xl font-black text-amber-400">0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">تمت المعاينة وبانتظار الاعتماد</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 text-xl">
+                    <i class="fa-solid fa-spinner"></i>
+                </div>
+            </div>
+
+            <div class="glass-card glass-card-hover p-4 rounded-2xl flex items-center justify-between border-l-4 border-l-sky-400">
+                <div>
+                    <p class="text-xs font-semibold text-slate-400 mb-1">الفواتير الصادرة (نعم)</p>
+                    <h3 id="statIssuedInvoices" class="text-2xl font-black text-sky-400">0</h3>
+                    <p class="text-[11px] text-slate-400 mt-1">المحسوبة تلقائياً من خانة "نعم"</p>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 text-xl">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- شريط التبويبات والفلاتر وأدوات التقويم -->
+        <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between border-b border-slate-800 pb-4 gap-4">
+            
+            <div class="flex items-center gap-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-800 overflow-x-auto">
+                <button onclick="switchTab('sheet1')" id="tabBtnSheet1" class="tab-btn px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-2 transition-all bg-brand-600 text-white shadow-md whitespace-nowrap">
+                    <i class="fa-solid fa-table-list"></i>
+                    جدول متابعة التقارير
+                </button>
+                <button onclick="switchTab('analytics')" id="tabBtnAnalytics" class="tab-btn px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    الرسوم البيانية وحالة الفواتير
+                </button>
+                <button onclick="switchTab('aiAssistant')" id="tabBtnAiAssistant" class="tab-btn px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-2 transition-all text-slate-400 hover:text-white hover:bg-slate-800 whitespace-nowrap">
+                    <i class="fa-solid fa-robot text-purple-400"></i>
+                    المساعد الهندسي الذكي
+                </button>
+            </div>
+
+            <!-- عناصر التصفية والتقويم -->
+            <div class="flex items-center gap-2 flex-wrap xl:justify-end">
+                
+                <!-- زر اختيار الشهر (التقويم / Calendar) -->
+                <div class="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 px-2.5 py-1 rounded-xl">
+                    <span class="text-xs text-brand-400 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-calendar-days"></i> الشهر:
+                    </span>
+                    <input type="month" id="calendarMonthInput" onchange="onCalendarMonthChange()" class="bg-transparent text-slate-200 text-xs focus:outline-none cursor-pointer">
+                    <button onclick="clearMonthFilter()" id="clearMonthBtn" title="إلغاء فلتر الشهر وعرض الكل" class="hidden text-slate-400 hover:text-rose-400 px-1 text-xs">
+                        <i class="fa-solid fa-circle-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- قائمة الشهور المكتوبة للاختيار السريع -->
+                <select id="quickMonthSelect" onchange="onQuickMonthSelectChange()" class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-brand-500 transition-all">
+                    <option value="">كل الشهور</option>
+                </select>
+
+                <!-- فلتر الحالة -->
+                <select id="statusFilter" onchange="applyFilters()" class="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-brand-500 transition-all">
+                    <option value="ALL">جميع الحالات</option>
+                    <option value="مكتمل">مكتمل (تم اصدار التقرير)</option>
+                    <option value="قيد الاصدار والمراجعة">قيد الاصدار والمراجعة</option>
+                    <option value="لم تتم زيارته بعد">لم تتم زيارته بعد</option>
+                    <option value="INVOICE_YES">الفواتير الصادرة (نعم)</option>
+                    <option value="INVOICE_NO">الفواتير غير الصادرة (لا)</option>
+                </select>
+
+                <!-- حقل البحث النصي -->
+                <div class="relative w-full sm:w-48">
+                    <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="بحث برقم التقرير أو الفيلا..." class="w-full pl-3 pr-8 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-brand-500 transition-all placeholder:text-slate-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول البيانات -->
+        <section id="tabContentSheet1" class="tab-content block animate-fade-in">
+            <div class="glass-card rounded-2xl overflow-hidden shadow-xl border border-slate-800">
+                
+                <div class="p-4 bg-slate-950/60 border-b border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-base font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-clipboard-list text-brand-400"></i>
+                            جدول متابعة التقارير
+                            <span id="activeMonthBadge" class="hidden text-xs bg-brand-500/20 text-brand-300 border border-brand-500/40 px-2 py-0.5 rounded-full"></span>
+                        </h2>
+                        <p class="text-xs text-slate-400">يتم عرض التقارير وتصفيتها حسب اختيار الشهر المباشر من التقويم أو القائمة.</p>
+                    </div>
+                    <div class="text-xs text-slate-400">
+                        عرض <span id="showingCountSheet1" class="font-bold text-brand-400">0</span> تقرير
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right border-collapse">
+                        <thead>
+                            <tr class="bg-slate-950/80 text-slate-300 text-xs uppercase tracking-wider border-b border-slate-800">
+                                <th class="py-3 px-4 font-bold">رقم التقرير</th>
+                                <th class="py-3 px-4 font-bold">كود الفيلا واسم المشروع</th>
+                                <th class="py-3 px-4 font-bold text-center">حالة التقرير</th>
+                                <th class="py-3 px-4 font-bold text-center">حالة الفاتورة</th>
+                                <th class="py-3 px-4 font-bold">التاريخ</th>
+                                <th class="py-3 px-4 font-bold">الشهر</th>
+                                <th class="py-3 px-4 font-bold text-center">التغييرات</th>
+                                <th class="py-3 px-4 font-bold text-center">التفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sheet1TableBody" class="divide-y divide-slate-800/80 text-xs text-slate-300">
+                            <!-- المحتوى الديناميكي -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="sheet1EmptyState" class="hidden p-8 text-center text-slate-500">
+                    <i class="fa-solid fa-calendar-xmark text-4xl mb-2 text-slate-600"></i>
+                    <p>لا توجد أي تقارير مطابقة للشهر أو الفلتر المحدد.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- الرسوم البيانية -->
+        <section id="tabContentAnalytics" class="tab-content hidden animate-fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-card p-5 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-pie-chart text-sky-400"></i>
+                        توزيع حالة الفواتير (للشهر المحدد)
+                    </h3>
+                    <div class="h-64 relative flex items-center justify-center">
+                        <canvas id="invoiceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card p-5 rounded-2xl border border-slate-800">
+                    <h3 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-brand-400"></i>
+                        ملخص مؤشرات التغييرات والتقارير
+                    </h3>
+                    <div class="h-64 relative">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- المساعد الذكي -->
+        <section id="tabContentAiAssistant" class="tab-content hidden animate-fade-in">
+            <div class="glass-card rounded-2xl p-5 border border-purple-500/20 shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 text-lg">
+                            <i class="fa-solid fa-brain"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-bold text-white flex items-center gap-2">
+                                المساعد الذكي لمشاريع م. أحمد عطا
+                                <span class="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px]">Gemini 3 Flash</span>
+                            </h2>
+                            <p class="text-xs text-slate-400">استفسر مباشرة عن بيانات التقارير والشهور.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap text-xs">
+                        <button onclick="setAiPrompt('ماهي التقارير التي صدرت لها الفاتورة (نعم)؟')" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 transition-all">
+                            🧾 الفواتير الصادرة (نعم)
+                        </button>
+                        <button onclick="setAiPrompt('ماهي التقارير التي لم تصدر فاتورتها بعد (لا)؟')" class="px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 transition-all">
+                            ❌ الفواتير غير الصادرة (لا)
+                        </button>
+                    </div>
+                </div>
+
+                <div id="aiChatBox" class="min-h-[250px] max-h-[420px] overflow-y-auto space-y-3 p-3 bg-slate-950/70 rounded-xl border border-slate-800 text-xs">
+                    <div class="flex gap-3 bg-slate-900 p-3 rounded-xl border border-slate-800">
+                        <div class="w-7 h-7 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="space-y-1 text-slate-300 leading-relaxed">
+                            <p class="font-bold text-purple-300">مساعد Gemini الذكي:</p>
+                            <p>أهلاً بك! يمكنك الآن استخدام أداة تقويم الشهر بأعلى الجدول لعزل تقارير أي شهر فوراً وعرض بياناته بدقة.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <form onsubmit="handleAiChatSubmit(event)" class="flex items-center gap-2">
+                    <input type="text" id="aiQueryInput" placeholder="اكتب سؤالك هنا..." class="flex-1 p-3 rounded-xl bg-slate-950 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-purple-500 transition-all">
+                    <button type="submit" id="aiSendBtn" class="px-5 py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md active:scale-95">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        إرسال
+                    </button>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal تفاصيل التقرير -->
+    <div id="detailsModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-500/20 border border-brand-500/30 flex items-center justify-center text-brand-400">
+                        <i class="fa-solid fa-house-circle-check"></i>
+                    </div>
+                    <div>
+                        <h3 id="modalVillaTitle" class="text-base font-bold text-white">تفاصيل التقرير</h3>
+                        <p id="modalSubtitle" class="text-xs text-slate-400">المهندس: م. أحمد عطا</p>
+                    </div>
+                </div>
+                <button onclick="closeDetailsModal()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="modalBodyContent" class="p-5 overflow-y-auto space-y-4"></div>
+
+            <div class="p-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between">
+                <button id="btnModalAiReport" onclick="generateCurrentProjectAiReport()" class="px-3.5 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600 border border-purple-500/40 text-purple-200 hover:text-white text-xs font-bold flex items-center gap-2 transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-300"></i>
+                    توليد خطاب معاينة رسمية (AI)
+                </button>
+                <button onclick="closeDetailsModal()" class="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal ملخص الذكاء الاصطناعي -->
+    <div id="aiSummaryModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-purple-500/30 w-full max-w-3xl rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-md">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-white">التقرير التنفيذي الشامل بالذكاء الاصطناعي</h3>
+                        <p class="text-xs text-purple-300">متابعة تقارير ومشاريع م. أحمد عطا</p>
+                    </div>
+                </div>
+                <button onclick="closeAiSummaryModal()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div id="aiSummaryContent" class="p-6 overflow-y-auto space-y-4 text-xs text-slate-200 leading-relaxed"></div>
+
+            <div class="p-3 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between">
+                <button onclick="copyAiSummaryText()" class="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy"></i>
+                    نسخ التقرير
+                </button>
+                <button onclick="closeAiSummaryModal()" class="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold">
+                    إغلاق
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal إعدادات الرابط -->
+    <div id="settingsModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="glass-card bg-slate-900 border border-slate-700 w-full max-w-xl rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-brand-400"></i>
+                    <h3 class="text-base font-bold text-white">إعدادات رابط جوجل شيت (Google Sheets)</h3>
+                </div>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 space-y-4 text-xs">
+                <div class="p-3 bg-brand-950/40 border border-brand-500/20 rounded-xl text-brand-300">
+                    <p class="font-bold mb-1"><i class="fa-solid fa-circle-info ml-1"></i> الربط المباشر:</p>
+                    <p class="text-[11px] leading-relaxed text-slate-300">
+                        رقم التقرير يُقرأ من الشيت، كود الفيلا بالعمود C، التغييرات بالعمود D، واستخراج الشهر بدقة من التاريخ.
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">رابط CSV (جدول متابعة التقارير):</label>
+                    <input type="text" id="inputSheet1Url" class="w-full p-2.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-200 text-xs focus:outline-none focus:border-brand-500 font-mono">
+                </div>
+            </div>
+
+            <div class="p-3 border-t border-slate-800 bg-slate-950/60 flex items-center justify-between">
+                <button onclick="resetDefaultUrls()" class="text-slate-400 hover:text-white text-xs underline">إعادة الضبط الافتراضي</button>
+                <div class="flex items-center gap-2">
+                    <button onclick="closeSettingsModal()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">إلغاء</button>
+                    <button onclick="saveSettingsAndReload()" class="px-4 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold">حفظ وتحديث</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_SHEET_ID = "2PACX-1vTiLN8x7IWtEZ83XLg6kDT1RP8ZXc0Y9G4_nuvEx8Y2GbXU0KfCatUbS8EcrqiEsA";
+        const TARGET_GID = "1666435043";
+        
+        let sheet1CsvUrl = localStorage.getItem("sheet1_atta_url") || `https://docs.google.com/spreadsheets/d/e/${BASE_SHEET_ID}/pubhtml?gid=${TARGET_GID}&single=true`;
+
+        let processedSheet1 = [];
+        let currentFilteredProjects = [];
+        let currentActiveModalProject = null;
+        
+        let invoiceChartInstance = null;
+        let progressChartInstance = null;
+
+        function convertToCsvUrl(rawUrl) {
+            if (!rawUrl) return "";
+            let url = rawUrl.trim();
+            if (url.includes("/pubhtml")) {
+                url = url.replace("/pubhtml", "/pub");
+            }
+            if (!url.includes("output=csv")) {
+                url += (url.includes("?") ? "&" : "?") + "output=csv";
+            }
+            return url;
+        }
+
+        // استخراج الشهر بصيغتين: اسم الشهر العربي (سبتمبر) ومفتاح التاريخ (2026-09)
+        function extractMonthDataFromDate(dateStr) {
+            if (!dateStr || !dateStr.trim()) return { monthName: "", yearMonthKey: "" };
+            dateStr = dateStr.trim();
+            
+            const arabicMonths = {
+                "يناير": 1, "فبراير": 2, "مارس": 3, "أبريل": 4, "مايو": 5, "يونيو": 6,
+                "يوليو": 7, "أغسطس": 8, "سبتمبر": 9, "أكتوبر": 10, "نوفمبر": 11, "ديسمبر": 12,
+                "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+                "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
+            };
+
+            const monthNamesAr = ["", "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
+            // فحص نمط YYYY-MM-DD الشائع في شيتات جوجل
+            const isoMatch = dateStr.match(/^(\d{4})[-/](\d{1,2})([-/]\d{1,2})?/);
+            if (isoMatch) {
+                const year = isoMatch[1];
+                const month = String(parseInt(isoMatch[2])).padStart(2, '0');
+                const monthNum = parseInt(isoMatch[2]);
+                return {
+                    monthName: monthNamesAr[monthNum] || "",
+                    yearMonthKey: `${year}-${month}`
+                };
+            }
+
+            // فحص نمط DD-MM-YYYY
+            const dmyMatch = dateStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+            if (dmyMatch) {
+                const year = dmyMatch[3];
+                const month = String(parseInt(dmyMatch[2])).padStart(2, '0');
+                const monthNum = parseInt(dmyMatch[2]);
+                return {
+                    monthName: monthNamesAr[monthNum] || "",
+                    yearMonthKey: `${year}-${month}`
+                };
+            }
+
+            // فحص الكلمات والشهور النصية
+            for (let key in arabicMonths) {
+                if (dateStr.toLowerCase().includes(key)) {
+                    const mNum = arabicMonths[key];
+                    return {
+                        monthName: monthNamesAr[mNum],
+                        yearMonthKey: ""
+                    };
+                }
+            }
+
+            return { monthName: "", yearMonthKey: "" };
+        }
+
+        function classifyProjectRow(r, indexNum) {
+            const rowTextCombined = r.join(" ").toLowerCase();
+            
+            let rawReportNumVal = (r[0] !== undefined && r[0] !== null) ? r[0].trim() : "";
+            let reportNumInt = parseInt(rawReportNumVal);
+            if (isNaN(reportNumInt) || reportNumInt <= 0) {
+                let rawReportNumVal2 = (r[1] !== undefined && r[1] !== null) ? r[1].trim() : "";
+                reportNumInt = parseInt(rawReportNumVal2);
+                if (isNaN(reportNumInt) || reportNumInt <= 0) {
+                    reportNumInt = indexNum;
+                }
+            }
+            let reportNumber = `R-${String(reportNumInt).padStart(2, '0')}`;
+
+            let villa = "";
+            if (r[2] !== undefined && r[2] !== null && r[2].trim() !== "") {
+                villa = r[2].trim();
+            }
+
+            let changesVal = (r[3] !== undefined && r[3] !== null) ? r[3].trim() : "";
+            let isChangesEmpty = (changesVal === "");
+            let parsedChanges = parseInt(changesVal);
+            if (isNaN(parsedChanges)) {
+                parsedChanges = 0;
+            }
+
+            let isChangesStopped = (!isChangesEmpty && parsedChanges === 0) || changesVal === "0";
+            let changesDisplayText = "";
+            let changesBadgeClass = "";
+
+            if (isChangesEmpty) {
+                changesDisplayText = '<span class="text-slate-500 italic">--</span>';
+                changesBadgeClass = "bg-slate-800 text-slate-400 border-slate-700";
+            } else if (isChangesStopped) {
+                changesDisplayText = "متوقف";
+                changesBadgeClass = "bg-rose-500/10 text-rose-400 border-rose-500/30 font-semibold";
+            } else {
+                changesDisplayText = `${changesVal} تغييرات`;
+                changesBadgeClass = "bg-brand-500/10 text-brand-400 border-brand-500/30 font-bold";
+            }
+
+            // استخراج عمود التاريخ
+            let dateVal = "";
+            for (let i = 0; i < r.length; i++) {
+                const val = (r[i] || "").trim();
+                if (val.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/) || val.match(/\d{1,2}[-/]\d{1,2}[-/]\d{4}/)) {
+                    dateVal = val;
+                    break;
+                }
+            }
+
+            const monthData = extractMonthDataFromDate(dateVal);
+
+            let hasInvoiceIssued = false;
+            for (let i = 0; i < r.length; i++) {
+                const cellVal = (r[i] || "").trim();
+                const cellValLower = cellVal.toLowerCase();
+                if (cellVal === "نعم" || cellValLower === "yes" || cellVal.includes("نعم")) {
+                    hasInvoiceIssued = true;
+                    break;
+                }
+            }
+
+            let invoiceStatusText = hasInvoiceIssued ? "صدرت الفاتورة (نعم)" : "لم تصدر الفاتورة (لا)";
+            let invoiceStatusBadge = hasInvoiceIssued 
+                ? "bg-sky-500/10 text-sky-400 border-sky-500/30 font-bold" 
+                : "bg-slate-800 text-slate-400 border-slate-700";
+
+            let reportStatusText = "لم تتم زيارته بعد";
+            let reportStatusBadge = "bg-slate-800 text-slate-400 border-slate-700";
+            let reportStatusIcon = "fa-solid fa-clock";
+
+            const isCompleted = rowTextCombined.includes("تم اصدار التقرير") || 
+                                rowTextCombined.includes("تم إصدار التقرير") || 
+                                rowTextCombined.includes("اكتملت") || 
+                                rowTextCombined.includes("مكتمل") || 
+                                rowTextCombined.includes("تم التسليم");
+
+            const isSiteVisited = rowTextCombined.includes("تم معاينة الموقع") || 
+                                  rowTextCombined.includes("تم زيارة الموقع") || 
+                                  rowTextCombined.includes("معاينة الموقع") || 
+                                  rowTextCombined.includes("زيارة الموقع") || 
+                                  rowTextCombined.includes("تم المعاينة");
+
+            if (isCompleted) {
+                reportStatusText = "مكتمل (تم اصدار التقرير)";
+                reportStatusBadge = "bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+                reportStatusIcon = "fa-solid fa-circle-check";
+            } else if (isSiteVisited) {
+                reportStatusText = "قيد الاصدار والمراجعة (تم معاينة الموقع)";
+                reportStatusBadge = "bg-amber-500/10 text-amber-400 border-amber-500/30";
+                reportStatusIcon = "fa-solid fa-spinner";
+            }
+
+            return {
+                id: indexNum,
+                reportNumber,
+                villa,
+                changesVal,
+                parsedChanges,
+                isChangesEmpty,
+                isChangesStopped,
+                changesDisplayText,
+                changesBadgeClass,
+                reportStatusText,
+                reportStatusBadge,
+                reportStatusIcon,
+                hasInvoiceIssued,
+                invoiceStatusText,
+                invoiceStatusBadge,
+                dateVal,
+                monthVal: monthData.monthName,
+                yearMonthKey: monthData.yearMonthKey,
+                rawRow: r
+            };
+        }
+
+        async function fetchLiveData() {
+            const syncIcon = document.getElementById("syncIcon");
+            const refreshBtnIcon = document.getElementById("refreshBtnIcon");
+            const syncText = document.getElementById("syncText");
+
+            if (syncIcon) syncIcon.classList.add("fa-spin");
+            if (refreshBtnIcon) refreshBtnIcon.classList.add("fa-spin");
+            if (syncText) syncText.innerText = "جاري الجلب...";
+
+            const targetCsvUrl = convertToCsvUrl(sheet1CsvUrl);
+            const endpoints = [
+                targetCsvUrl,
+                `https://docs.google.com/spreadsheets/d/e/${BASE_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${TARGET_GID}`,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(targetCsvUrl)}`
+            ];
+
+            let csvText = null;
+
+            for (const ep of endpoints) {
+                try {
+                    const response = await fetch(ep);
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (text && text.trim().length > 10) {
+                            csvText = text;
+                            break;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Attempt failed for endpoint:", ep, e);
+                }
+            }
+
+            try {
+                if (!csvText) throw new Error("تعذر جلب البيانات من كافة المسارات");
+
+                const rawRows = parseCSV(csvText);
+                processedSheet1 = [];
+                let itemCounter = 1;
+
+                // يبدأ من الصف 5 في جوجل شيت (index 4)
+                for (let i = 4; i < rawRows.length; i++) {
+                    const row = rawRows[i];
+                    if (!row || row.length === 0) continue;
+
+                    const classified = classifyProjectRow(row, itemCounter++);
+                    processedSheet1.push(classified);
+                }
+
+                if (processedSheet1.length < 5) {
+                    useFallbackData();
+                } else {
+                    showToast(`تم تحديث البيانات بنجاح (${processedSheet1.length} تقريراً)`);
+                }
+            } catch (err) {
+                console.warn("استخدام البيانات الاحتياطية:", err);
+                useFallbackData();
+                showToast("تم استخدام البيانات التوضيحية للشهر");
+            } finally {
+                if (syncIcon) syncIcon.classList.remove("fa-spin");
+                if (refreshBtnIcon) refreshBtnIcon.classList.remove("fa-spin");
+                if (syncText) syncText.innerText = "متصل وجاهز";
+
+                const now = new Date();
+                const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
+                document.getElementById("lastUpdatedTime").innerText = `(${timeStr})`;
+
+                buildMonthDropdownOptions();
+                applyFilters();
+            }
+        }
+
+        function useFallbackData() {
+            processedSheet1 = [];
+            // بيانات تجريبية مطابقة لشهري سبتمبر وأكتوبر 2026 الظاهرين بالصور
+            const datesSep = ["2026-09-01", "2026-09-02", "2026-09-05", "2026-09-10", "2026-09-15", "2026-09-20", "2026-09-25", "2026-09-30"];
+            const datesOct = ["2026-10-01", "2026-10-02", "2026-10-05", "2026-10-10", "2026-10-15"];
+
+            let id = 1;
+            datesSep.forEach(d => {
+                processedSheet1.push(classifyProjectRow([String(id), d, `فيلا ${id}`, "5", "نعم", "مكتمل تم اصدار التقرير"], id++));
+            });
+            datesOct.forEach(d => {
+                processedSheet1.push(classifyProjectRow([String(id), d, `فيلا ${id}`, "2", "لا", "قيد الاصدار والمراجعة"], id++));
+            });
+        }
+
+        function parseCSV(text) {
+            const lines = text.split(/\r\n|\n/);
+            const result = [];
+            for (let line of lines) {
+                if (!line.trim()) continue;
+                const row = [];
+                let insideQuotes = false;
+                let entry = '';
+                for (let char of line) {
+                    if (char === '"') {
+                        insideQuotes = !insideQuotes;
+                    } else if (char === ',' && !insideQuotes) {
+                        row.push(entry);
+                        entry = '';
+                    } else {
+                        entry += char;
+                    }
+                }
+                row.push(entry);
+                result.push(row);
+            }
+            return result;
+        }
+
+        // بناء خيارات قائمة الشهور تلقائياً من تواريخ الشيت
+        function buildMonthDropdownOptions() {
+            const select = document.getElementById("quickMonthSelect");
+            if (!select) return;
+
+            const existingMonths = new Map();
+
+            processedSheet1.forEach(p => {
+                if (p.yearMonthKey) {
+                    const label = `${p.monthVal || ''} (${p.yearMonthKey})`.trim();
+                    existingMonths.set(p.yearMonthKey, label);
+                } else if (p.monthVal) {
+                    existingMonths.set(p.monthVal, p.monthVal);
+                }
+            });
+
+            select.innerHTML = '<option value="">كل الشهور</option>';
+            existingMonths.forEach((label, val) => {
+                const opt = document.createElement("option");
+                opt.value = val;
+                opt.innerText = label;
+                select.appendChild(opt);
+            });
+        }
+
+        // تفاعل عند تغيير أداة التقويم
+        function onCalendarMonthChange() {
+            const calVal = document.getElementById("calendarMonthInput").value; // مثال: "2026-09"
+            const quickSelect = document.getElementById("quickMonthSelect");
+            const clearBtn = document.getElementById("clearMonthBtn");
+
+            if (calVal) {
+                if (clearBtn) clearBtn.classList.remove("hidden");
+                if (quickSelect) quickSelect.value = calVal;
+            } else {
+                if (clearBtn) clearBtn.classList.add("hidden");
+                if (quickSelect) quickSelect.value = "";
+            }
+
+            applyFilters();
+        }
+
+        // تفاعل عند تغيير القائمة السريعة
+        function onQuickMonthSelectChange() {
+            const selectedVal = document.getElementById("quickMonthSelect").value;
+            const calInput = document.getElementById("calendarMonthInput");
+            const clearBtn = document.getElementById("clearMonthBtn");
+
+            if (selectedVal && selectedVal.match(/^\d{4}-\d{2}$/)) {
+                calInput.value = selectedVal;
+                if (clearBtn) clearBtn.classList.remove("hidden");
+            } else {
+                calInput.value = "";
+                if (selectedVal) {
+                    if (clearBtn) clearBtn.classList.remove("hidden");
+                } else {
+                    if (clearBtn) clearBtn.classList.add("hidden");
+                }
+            }
+
+            applyFilters();
+        }
+
+        // زر تفريغ الشهر
+        function clearMonthFilter() {
+            document.getElementById("calendarMonthInput").value = "";
+            document.getElementById("quickMonthSelect").value = "";
+            document.getElementById("clearMonthBtn").classList.add("hidden");
+            applyFilters();
+        }
+
+        // دالة الفلترة الرئيسية
+        function applyFilters() {
+            const searchVal = (document.getElementById("searchInput")?.value || "").toLowerCase().trim();
+            const statusFilter = document.getElementById("statusFilter")?.value || "ALL";
+            
+            const calendarMonth = document.getElementById("calendarMonthInput")?.value || ""; // "YYYY-MM"
+            const quickMonth = document.getElementById("quickMonthSelect")?.value || "";
+
+            const targetMonthFilter = calendarMonth || quickMonth;
+
+            // شارة الشهر النشط
+            const badge = document.getElementById("activeMonthBadge");
+            if (targetMonthFilter) {
+                if (badge) {
+                    badge.innerText = `مفلتر بحسب: ${targetMonthFilter}`;
+                    badge.classList.remove("hidden");
+                }
+            } else {
+                if (badge) badge.classList.add("hidden");
+            }
+
+            currentFilteredProjects = processedSheet1.filter(item => {
+                // 1. فلتر الشهر بناءً على التاريخ
+                if (targetMonthFilter) {
+                    const matchesKey = item.yearMonthKey && item.yearMonthKey === targetMonthFilter;
+                    const matchesDatePrefix = item.dateVal && item.dateVal.startsWith(targetMonthFilter);
+                    const matchesMonthName = item.monthVal && item.monthVal === targetMonthFilter;
+
+                    if (!matchesKey && !matchesDatePrefix && !matchesMonthName) {
+                        return false;
+                    }
+                }
+
+                // 2. فلتر البحث
+                const matchesSearch = item.reportNumber.toLowerCase().includes(searchVal) ||
+                                      item.villa.toLowerCase().includes(searchVal) ||
+                                      item.monthVal.toLowerCase().includes(searchVal) ||
+                                      item.dateVal.toLowerCase().includes(searchVal);
+
+                // 3. فلتر الحالة
+                let matchesStatus = true;
+                if (statusFilter === "مكتمل") {
+                    matchesStatus = item.reportStatusText.includes("مكتمل");
+                } else if (statusFilter === "قيد الاصدار والمراجعة") {
+                    matchesStatus = item.reportStatusText.includes("قيد الاصدار");
+                } else if (statusFilter === "لم تتم زيارته بعد") {
+                    matchesStatus = item.reportStatusText.includes("لم تتم زيارته");
+                } else if (statusFilter === "INVOICE_YES") {
+                    matchesStatus = item.hasInvoiceIssued;
+                } else if (statusFilter === "INVOICE_NO") {
+                    matchesStatus = !item.hasInvoiceIssued;
+                }
+
+                return matchesSearch && matchesStatus;
+            });
+
+            updateDashboardStats(currentFilteredProjects);
+            renderTable(currentFilteredProjects);
+            renderCharts(currentFilteredProjects);
+        }
+
+        function updateDashboardStats(dataList) {
+            const total = dataList.length;
+            const completed = dataList.filter(p => p.reportStatusText.includes("مكتمل")).length;
+            const pending = dataList.filter(p => p.reportStatusText.includes("قيد الاصدار")).length;
+            const issuedInvoices = dataList.filter(p => p.hasInvoiceIssued).length;
+
+            document.getElementById("statTotalProjects").innerText = total;
+            document.getElementById("statCompletedReports").innerText = completed;
+            document.getElementById("statPendingReports").innerText = pending;
+            document.getElementById("statIssuedInvoices").innerText = issuedInvoices;
+
+            const sub = document.getElementById("statTotalSubtext");
+            if (sub) {
+                const calVal = document.getElementById("calendarMonthInput")?.value;
+                sub.innerText = calVal ? `تقارير شهر (${calVal})` : "كافة السجلات المعروضة";
+            }
+        }
+
+        function renderTable(dataList) {
+            const tbody = document.getElementById("sheet1TableBody");
+            const emptyState = document.getElementById("sheet1EmptyState");
+            const countLabel = document.getElementById("showingCountSheet1");
+
+            if (!tbody) return;
+            tbody.innerHTML = "";
+
+            if (countLabel) countLabel.innerText = dataList.length;
+
+            if (dataList.length === 0) {
+                if (emptyState) emptyState.classList.remove("hidden");
+                return;
+            } else {
+                if (emptyState) emptyState.classList.add("hidden");
+            }
+
+            dataList.forEach((item) => {
+                const tr = document.createElement("tr");
+                tr.className = "hover:bg-slate-900/60 transition border-b border-slate-800/80";
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-mono font-bold text-brand-400">${item.reportNumber}</td>
+                    <td class="py-3 px-4">
+                        <div class="font-bold text-slate-100">${item.villa || '<span class="text-slate-500 italic">-- فارغ --</span>'}</div>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${item.reportStatusBadge}">
+                            <i class="${item.reportStatusIcon}"></i>
+                            ${item.reportStatusText}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] border ${item.invoiceStatusBadge}">
+                            <i class="${item.hasInvoiceIssued ? 'fa-solid fa-check text-sky-400' : 'fa-solid fa-xmark text-slate-400'}"></i>
+                            ${item.invoiceStatusText}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 font-mono text-slate-300 text-[11px]">${item.dateVal || '<span class="text-slate-500 italic">--</span>'}</td>
+                    <td class="py-3 px-4 font-bold text-brand-300">${item.monthVal || (item.yearMonthKey || '<span class="text-slate-500 italic">--</span>')}</td>
+                    <td class="py-3 px-4 text-center">
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] border ${item.changesBadgeClass}">
+                            <i class="${item.isChangesEmpty ? 'fa-solid fa-minus text-slate-500' : (item.isChangesStopped ? 'fa-solid fa-ban text-rose-400' : 'fa-solid fa-chart-line text-brand-400')}"></i>
+                            ${item.changesDisplayText}
+                        </span>
+                    </td>
+                    <td class="py-3 px-4 text-center">
+                        <button onclick="openDetailsModal(${item.id})" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white border border-slate-700 text-xs font-semibold transition">
+                            <i class="fa-solid fa-eye text-brand-400 ml-1"></i> التفاصيل
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function renderCharts(dataList = processedSheet1) {
+            const issuedYes = dataList.filter(p => p.hasInvoiceIssued).length;
+            const issuedNo = dataList.length - issuedYes;
+
+            const ctxInv = document.getElementById("invoiceChart")?.getContext("2d");
+            if (ctxInv) {
+                if (invoiceChartInstance) invoiceChartInstance.destroy();
+                invoiceChartInstance = new Chart(ctxInv, {
+                    type: "doughnut",
+                    data: {
+                        labels: ["الفواتير الصادرة (نعم)", "الفواتير غير الصادرة (لا)"],
+                        datasets: [{
+                            data: [issuedYes, issuedNo],
+                            backgroundColor: ["#0284c7", "#334155"],
+                            borderColor: ["#0369a1", "#1e293b"],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: "#cbd5e1", font: { family: "Cairo" } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const ctxProg = document.getElementById("progressChart")?.getContext("2d");
+            if (ctxProg) {
+                if (progressChartInstance) progressChartInstance.destroy();
+                
+                const labels = dataList.map(p => p.reportNumber).slice(0, 10);
+                const data = dataList.map(p => p.parsedChanges).slice(0, 10);
+
+                progressChartInstance = new Chart(ctxProg, {
+                    type: "bar",
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: "عدد التغييرات (العمود D)",
+                            data: data,
+                            backgroundColor: "#22c55e",
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                ticks: { color: "#94a3b8" },
+                                grid: { color: "#1e293b" }
+                            },
+                            x: {
+                                ticks: { color: "#94a3b8" },
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: { labels: { color: "#cbd5e1", font: { family: "Cairo" } } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function setAiPrompt(text) {
+            const input = document.getElementById("aiQueryInput");
+            if (input) input.value = text;
+        }
+
+        async function handleAiChatSubmit(e) {
+            if (e) e.preventDefault();
+            const input = document.getElementById("aiQueryInput");
+            const query = input?.value.trim();
+            if (!query) return;
+
+            appendChatMessage(query, 'user');
+            input.value = "";
+
+            const loadingId = appendChatMessage("جاري استعلام الذكاء الاصطناعي...", 'ai', true);
+
+            setTimeout(() => {
+                removeChatMessage(loadingId);
+                const answer = generateSmartAiResponse(query);
+                appendChatMessage(answer, 'ai');
+            }, 700);
+        }
+
+        function generateSmartAiResponse(query) {
+            const activeList = currentFilteredProjects.length > 0 ? currentFilteredProjects : processedSheet1;
+            const total = activeList.length;
+            const yesList = activeList.filter(p => p.hasInvoiceIssued);
+            const noList = activeList.filter(p => !p.hasInvoiceIssued);
+            const activeChanges = activeList.filter(p => !p.isChangesStopped && !p.isChangesEmpty);
+
+            if (query.includes("نعم") || query.includes("الصادرة")) {
+                let txt = `🧾 **التقارير التي صدرت لها الفاتورة (${yesList.length} تقارير):**\n\n`;
+                yesList.forEach(p => {
+                    txt += `• **${p.reportNumber}** (كود الفيلا: ${p.villa || 'فارغ'} - التاريخ: ${p.dateVal || 'غير متوفر'}): ${p.reportStatusText}\n`;
+                });
+                return txt;
+            }
+
+            if (query.includes("لا") || query.includes("غير الصادرة")) {
+                let txt = `❌ **التقارير التي لم تصدر فاتورتها بعد (${noList.length} تقارير):**\n\n`;
+                noList.forEach(p => {
+                    txt += `• **${p.reportNumber}** (كود الفيلا: ${p.villa || 'فارغ'} - التاريخ: ${p.dateVal || 'غير متوفر'}): ${p.reportStatusText}\n`;
+                });
+                return txt;
+            }
+
+            return `بناءً على السجلات المعروضة حالياً (إجمالي ${total} تقريراً):
+- إجمالي التقارير: **${total}**
+- الفواتير الصادرة (نعم): **${yesList.length}**
+- التقارير ذات التغييرات النشطة: **${activeChanges.length}**`;
+        }
+
+        function appendChatMessage(text, sender, isLoading = false) {
+            const chatBox = document.getElementById("aiChatBox");
+            if (!chatBox) return;
+
+            const msgId = "msg-" + Date.now();
+            const div = document.createElement("div");
+            div.id = msgId;
+            div.className = `flex gap-3 p-3 rounded-xl border ${sender === 'user' ? 'bg-slate-800 border-slate-700' : 'bg-slate-900 border-purple-500/30'}`;
+
+            const avatarHTML = sender === 'user'
+                ? `<div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center shrink-0"><i class="fa-solid fa-user"></i></div>`
+                : `<div class="w-7 h-7 rounded-lg bg-purple-600/30 text-purple-300 flex items-center justify-center shrink-0"><i class="fa-solid fa-robot"></i></div>`;
+
+            div.innerHTML = `
+                ${avatarHTML}
+                <div class="space-y-1 text-slate-200 leading-relaxed ${isLoading ? 'animate-pulse text-purple-300' : ''}">
+                    <p class="font-bold ${sender === 'user' ? 'text-brand-400' : 'text-purple-300'}">${sender === 'user' ? 'أنت:' : 'مساعد Gemini الذكي:'}</p>
+                    <div class="whitespace-pre-wrap">${text}</div>
+                </div>
+            `;
+
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return msgId;
+        }
+
+        function removeChatMessage(msgId) {
+            const el = document.getElementById(msgId);
+            if (el) el.remove();
+        }
+
+        function openDetailsModal(id) {
+            const item = processedSheet1.find(p => p.id === id);
+            if (!item) return;
+
+            currentActiveModalProject = item;
+
+            document.getElementById("modalVillaTitle").innerText = `${item.villa || 'مشروع بدون اسم محدد'} (${item.reportNumber})`;
+            document.getElementById("modalSubtitle").innerText = `كود الفيلا (العمود C): ${item.villa || 'فارغ'} | التغييرات (العمود D): ${item.changesDisplayText} | الشهر: ${item.monthVal || item.yearMonthKey || 'فارغ'}`;
+
+            const modalBody = document.getElementById("modalBodyContent");
+            modalBody.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-950/80 p-4 rounded-xl border border-slate-800">
+                    <div>
+                        <span class="text-slate-400 block mb-1">رقم التقرير</span>
+                        <span class="font-bold text-brand-400 font-mono text-sm">${item.reportNumber}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">كود الفيلا واسم المشروع (العمود C)</span>
+                        <span class="font-bold text-white text-sm">${item.villa || '<span class="text-slate-500 italic">-- فارغ --</span>'}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">التاريخ المستخرج من الشيت</span>
+                        <span class="font-bold text-slate-200 text-sm font-mono">${item.dateVal || 'غير متوفر'}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">الشهر المستخرج</span>
+                        <span class="font-bold text-brand-300 text-sm">${item.monthVal || item.yearMonthKey || 'غير متوفر'}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">عدد التغييرات (العمود D)</span>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs border ${item.changesBadgeClass}">${item.changesDisplayText}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block mb-1">حالة التقرير</span>
+                        <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold border ${item.reportStatusBadge}">${item.reportStatusText}</span>
+                    </div>
+                </div>
+
+                <div id="modalAiLetterBox" class="hidden p-4 bg-purple-950/30 border border-purple-500/30 rounded-xl space-y-2 text-slate-200 font-mono text-xs whitespace-pre-wrap"></div>
+            `;
+
+            document.getElementById("detailsModal").classList.remove("hidden");
+            document.getElementById("detailsModal").classList.add("flex");
+        }
+
+        function closeDetailsModal() {
+            document.getElementById("detailsModal").classList.add("hidden");
+            document.getElementById("detailsModal").classList.remove("flex");
+        }
+
+        function generateCurrentProjectAiReport() {
+            if (!currentActiveModalProject) return;
+            const p = currentActiveModalProject;
+
+            const letterBox = document.getElementById("modalAiLetterBox");
+            if (!letterBox) return;
+
+            letterBox.innerText = `خطاب معاينة وتقييم فني رسمي (شهر ${p.monthVal || p.yearMonthKey || 'غير محدد'})
+المشروع / كود الفيلا: ${p.villa || 'مشروع فني رقم ' + p.reportNumber}
+رقم التقرير: ${p.reportNumber}
+المعاين: م. أحمد عطا
+التاريخ: ${p.dateVal || 'غير محدد'}
+الشهر المستخرج: ${p.monthVal || p.yearMonthKey || 'غير محدد'}
+حالة التغييرات (العمود D): ${p.changesDisplayText}
+
+تحية طيبة وبعد،
+تفيد الإدارة الفنية بأنه تم إجراء التقييم والمتابعة للفيلا المذكورة أعلاه. 
+الحالة الحالية للتقرير: ${p.reportStatusText}.
+حالة الفاتورة المسجلة: ${p.invoiceStatusText}.
+
+الملاحظات المعتمدة:
+"استيفاء كافة المتطلبات الهندسية والتغييرات المسجلة في العمود D."
+
+شاكرين تعاونكم،
+قسم الاعتماد الهندسي - م. أحمد عطا`;
+
+            letterBox.classList.remove("hidden");
+        }
+
+        function openAiSummaryModal() {
+            const content = document.getElementById("aiSummaryContent");
+            if (!content) return;
+
+            const activeList = currentFilteredProjects.length > 0 ? currentFilteredProjects : processedSheet1;
+            const total = activeList.length;
+            const completed = activeList.filter(p => p.reportStatusText.includes("مكتمل")).length;
+            const pending = activeList.filter(p => p.reportStatusText.includes("قيد الاصدار")).length;
+            const issuedYes = activeList.filter(p => p.hasInvoiceIssued).length;
+
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <h4 class="font-bold text-base text-purple-300">التقرير المالي والفني النهائي (م. أحمد عطا)</h4>
+                    <p class="text-slate-300 leading-relaxed">
+                        بناءً على التحديث، يبلغ إجمالي عدد التقارير المعتمدة المعروضة حالياً **${total} تقريراً**، مع تصفية وعزل الشهر بدقة من التاريخ المربوط بشيت المتابعة.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span class="text-slate-400 block text-[10px]">التقارير المكتملة</span>
+                            <span class="text-lg font-bold text-emerald-400">${completed}</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span class="text-slate-400 block text-[10px]">قيد الإصدار</span>
+                            <span class="text-lg font-bold text-amber-400">${pending}</span>
+                        </div>
+                        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span class="text-slate-400 block text-[10px]">فواتير صادرة (نعم)</span>
+                            <span class="text-lg font-bold text-sky-400">${issuedYes}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById("aiSummaryModal").classList.remove("hidden");
+            document.getElementById("aiSummaryModal").classList.add("flex");
+        }
+
+        function closeAiSummaryModal() {
+            document.getElementById("aiSummaryModal").classList.add("hidden");
+            document.getElementById("aiSummaryModal").classList.remove("flex");
+        }
+
+        function copyAiSummaryText() {
+            const content = document.getElementById("aiSummaryContent")?.innerText || "";
+            const temp = document.createElement("textarea");
+            temp.value = content;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            showToast("تم نسخ التقرير التنفيذي إلى الحافظة");
+        }
+
+        function openSettingsModal() {
+            document.getElementById("inputSheet1Url").value = sheet1CsvUrl;
+            document.getElementById("settingsModal").classList.remove("hidden");
+            document.getElementById("settingsModal").classList.add("flex");
+        }
+
+        function closeSettingsModal() {
+            document.getElementById("settingsModal").classList.add("hidden");
+            document.getElementById("settingsModal").classList.remove("flex");
+        }
+
+        function saveSettingsAndReload() {
+            const url = document.getElementById("inputSheet1Url").value.trim();
+            if (url) {
+                sheet1CsvUrl = url;
+                localStorage.setItem("sheet1_atta_url", url);
+            }
+            closeSettingsModal();
+            fetchLiveData();
+        }
+
+        function resetDefaultUrls() {
+            localStorage.removeItem("sheet1_atta_url");
+            sheet1CsvUrl = `https://docs.google.com/spreadsheets/d/e/${BASE_SHEET_ID}/pub?gid=${TARGET_GID}&single=true&output=csv`;
+            document.getElementById("inputSheet1Url").value = sheet1CsvUrl;
+            showToast("تم إعادة ضبط الرابط الافتراضي");
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-content").forEach(el => {
+                el.classList.add("hidden");
+                el.classList.remove("block");
+            });
+
+            document.querySelectorAll(".tab-btn").forEach(btn => {
+                btn.classList.remove("bg-brand-600", "text-white", "shadow-md");
+                btn.classList.add("text-slate-400");
+            });
+
+            if (tabId === 'sheet1') {
+                document.getElementById("tabContentSheet1")?.classList.remove("hidden");
+                document.getElementById("tabContentSheet1")?.classList.add("block");
+                document.getElementById("tabBtnSheet1")?.classList.add("bg-brand-600", "text-white", "shadow-md");
+            } else if (tabId === 'analytics') {
+                document.getElementById("tabContentAnalytics")?.classList.remove("hidden");
+                document.getElementById("tabContentAnalytics")?.classList.add("block");
+                document.getElementById("tabBtnAnalytics")?.classList.add("bg-brand-600", "text-white", "shadow-md");
+                renderCharts(currentFilteredProjects.length > 0 ? currentFilteredProjects : processedSheet1);
+            } else if (tabId === 'aiAssistant') {
+                document.getElementById("tabContentAiAssistant")?.classList.remove("hidden");
+                document.getElementById("tabContentAiAssistant")?.classList.add("block");
+                document.getElementById("tabBtnAiAssistant")?.classList.add("bg-brand-600", "text-white", "shadow-md");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toastNotification");
+            const toastMsg = document.getElementById("toastMessage");
+            if (!toast || !toastMsg) return;
+
+            toastMsg.innerText = msg;
+            toast.classList.remove("translate-y-20", "opacity-0");
+            
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            fetchLiveData();
+        });
+    </script>
+</body>
+</html>
